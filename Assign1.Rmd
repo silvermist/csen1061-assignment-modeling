@@ -8,6 +8,11 @@ output: html_document
 ```{r}
 library(RWeka)
 library(caret)
+library(adabag)
+library(randomForest)
+library(nnet)
+library(ipred)
+library(klaR)
 df <- read.csv("sonar.all-data")
 
 ```
@@ -30,8 +35,8 @@ evaluate_Weka_classifier(sonar_j48, numFolds = 10, complexity = FALSE,
 ### Part (III):
 #### Here we want to compare the performance of the different classifiers. after each classifier we print the Sensitivity which is equal to the recall of the first class, Positive Predictive Value is the Precision
 
-```{r warning=FALSE, message=FALSE }
-mymat = matrix(nrow=4, ncol=4)
+```{r warning=FALSE, message=FALSE , results="hide" }
+mymat = matrix(nrow=6, ncol=4)
 
 for(i in 1:dim(mymat)[1])  
 {
@@ -43,12 +48,16 @@ for(i in 1:dim(mymat)[1])
 	m <- "nnet"
 	}else if(i==4){
 	m <- "svmLinear"
+	}else if(i==5){
+	  m <- "treebag"
+	}else{
+	  m <- "blackboost"
 	}
 	split=0.80
 trainIndex <- createDataPartition(df$R, p=split, list=FALSE)
 data_train <- df[ trainIndex,]
 data_test <- df[-trainIndex,]
-train_control <- trainControl(method="cv", number=10)
+train_control <- trainControl(method="cv", number=10 )
 model <- train(R~., data=data_train, trControl=train_control, method=m)
 p <- predict(model,newdata = data_test[,1:60])
 t <- table(p , data_test[,61])
@@ -57,7 +66,7 @@ acc <- cm$overall['Accuracy']
 precision <- cm$byClass['Pos Pred Value'] 
 recall <- cm$byClass['Sensitivity']
 f_measure <- 2 * ((precision * recall) / (precision + recall))
-  for(j in 1:dim(mymat)[2]) # for each column
+  for(j in 1:dim(mymat)[2])
   {
     mymat[i,1] = acc
     mymat[i,2] = precision
@@ -66,8 +75,11 @@ f_measure <- 2 * ((precision * recall) / (precision + recall))
   }
 }
 colnames(mymat) <- c('accuracy','precision','recall','f_measure')
-rownames(mymat) <- c('random.forest', 'naive.bayes','neural.network','svm')
+rownames(mymat) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
 mytable <- as.table(mymat)
-mytable
+
 ```
 
+```{r}
+mytable
+```
