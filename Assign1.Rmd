@@ -5,7 +5,7 @@ output: html_document
 
 ### Part (I): Load Data
 
-```{r}
+```{r results="hide"}
 library(RWeka)
 library(caret)
 library(adabag)
@@ -14,8 +14,21 @@ library(nnet)
 library(ipred)
 library(klaR)
 library(dprep)
+library(kernlab)
+library(C50)
+library(plyr)
+library(e1071)
+library(party)
+library(grid)
+library(mvtnorm)
+library(modeltools)
+library(stats4)
+library(zoo)
+library(sandwich)
+library(mboost)
+library(parallel)
+library(stabs)
 df <- read.csv("sonar.all-data")
-
 ```
 
 ### Part (II): Evaluate Decision Tree model
