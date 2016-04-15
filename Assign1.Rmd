@@ -13,6 +13,7 @@ library(randomForest)
 library(nnet)
 library(ipred)
 library(klaR)
+library(dprep)
 df <- read.csv("sonar.all-data")
 
 ```
@@ -82,4 +83,92 @@ mytable <- as.table(mymat)
 
 ```{r}
 mytable
+```
+### Part (IV) : Expermenting with different datasets.
+#### prepare the new datasets
+
+```{r}
+hepatitis <- read.csv("hepatitis.data")
+#df2[df2 == '?'] <- NA
+#hepatitis <- clean(df2,0.5,0.3,name="hepatitis-clean")
+diabetes <- read.csv("pima-indians-diabetes.data")
+SPECT.test <- read.csv("SPECT.test")
+SPECT.train <- read.csv("SPECT.train")
+colnames(SPECT.train) <- colnames(SPECT.test) 
+#colnames(SPECT.test) <- c(1:23)
+```
+
+#### Accuracy table
+```{r warning=FALSE, message=FALSE , results="hide" }
+mymat = matrix(nrow=3, ncol=6)
+
+for(i in 1:dim(mymat)[1])  # for each row
+{
+if(i==1){
+df <- hepatitis
+split=0.80
+trainIndex <- createDataPartition(df[,1], p=split, list=FALSE)
+data_train <- df[ trainIndex,]
+data_test <- df[-trainIndex,]
+}else if(i==2){
+df <- diabetes
+split=0.80
+trainIndex <- createDataPartition(df[,9], p=split, list=FALSE)
+data_train <- df[ trainIndex,]
+data_test <- df[-trainIndex,]
+}else{
+data_train <- SPECT.train
+data_test <- SPECT.test
+}
+for(j in 1:dim(mymat)[2]) 
+  {
+  	if(j==1){
+	m <- "rf"
+	}else if(j==2){
+	m <- "nb"
+	}else if(j==3){
+	m <- "nnet"
+	}else if(j==4){
+	m <- "svmLinear"
+	}else if(j==5){
+	  m <- "treebag"
+	}else{
+	  m <- "blackboost"
+	}
+   
+	if(i==1){  # hep
+	 train_control <- trainControl(method="cv", number=10)
+ X2 <- data_train$X2
+   data_train$X2 <- factor(X2)
+	 	model <- train(X2~., data=data_train, trControl=train_control, method=m)
+	p <- predict(model,newdata = data_test[,-1])
+	t <- table(p , data_test[,1])
+	}else if(i==3){ #Spect
+	   train_control <- trainControl(method="cv", number=10)
+	   X1 <- data_train$X1
+   data_train$X1 <- factor(X1)
+	model <- train(X1~., data=data_train, trControl=train_control, method=m )
+	p <- predict(model,newdata = data_test[,-1])
+	t <- table(p , data_test[,1])
+	}
+	  else{ #diabetes
+	  train_control <- trainControl(method="cv", number=10)
+	X1 <- data_train$X1
+   data_train$X1 <- factor(X1)
+	  model <- train(X1~., data=data_train, trControl=train_control, method=m)
+	p <- predict(model,newdata = data_test[,-9])
+	t <- table(p , data_test[,9])
+	}
+	cm <- confusionMatrix(t)
+	acc <- cm$overall['Accuracy']
+	mymat[i,j] = acc
+  }
+}
+rownames(mymat) <- c('hepatits','diabetes','SPECT')
+colnames(mymat) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
+acctable <- as.table(mymat)
+```
+
+```{r}
+acctable
 ```
