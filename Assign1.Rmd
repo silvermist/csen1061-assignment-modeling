@@ -29,15 +29,15 @@ evaluate_Weka_classifier(sonar_j48, numFolds = 0, complexity = FALSE,
                                      class = TRUE)
 
 evaluate_Weka_classifier(sonar_j48, numFolds = 10, complexity = FALSE, 
-                                     class = TRUE)
+                                     class = TRUE )
 
 ```
 
 ### Part (III):
-#### Here we want to compare the performance of the different classifiers. after each classifier we print the Sensitivity which is equal to the recall of the first class, Positive Predictive Value is the Precision
+#### Here we want to compare the performance of the different classifiers.
 
 ```{r warning=FALSE, message=FALSE , results="hide" }
-mymat = matrix(nrow=6, ncol=4)
+mymat = matrix(nrow=7, ncol=4)
 
 for(i in 1:dim(mymat)[1])  
 {
@@ -51,10 +51,11 @@ for(i in 1:dim(mymat)[1])
 	m <- "svmLinear"
 	}else if(i==5){
 	  m <- "treebag"
-	}else{
+	}else if(i==6){
 	  m <- "blackboost"
+	}else{
+	  m <- "C5.0"
 	}
-	split=0.80
 bound <- floor(nrow(df)*0.8)         
 df <- df[sample(nrow(df)), ]         
 data_train <- df[1:bound, ]              
@@ -77,7 +78,7 @@ f_measure <- 2 * ((precision * recall) / (precision + recall))
   }
 }
 colnames(mymat) <- c('accuracy','precision','recall','f_measure')
-rownames(mymat) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
+rownames(mymat) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost','C5.0')
 mytable <- as.table(mymat)
 
 ```
@@ -100,10 +101,10 @@ colnames(SPECT.train) <- colnames(SPECT.test)
 #### Train the models on each dataset training part with each algorithm using cross validation, and test on testing part
 
 ```{r warning=FALSE, message=FALSE , results="hide" }
-mymat = matrix(nrow=3, ncol=6)
-mymatp = matrix(nrow=3, ncol=6)
-mymatr = matrix(nrow=3, ncol=6)
-mymatf = matrix(nrow=3, ncol=6)
+mymat = matrix(nrow=3, ncol=7)
+mymatp = matrix(nrow=3, ncol=7)
+mymatr = matrix(nrow=3, ncol=7)
+mymatf = matrix(nrow=3, ncol=7)
 for(i in 1:dim(mymat)[1])  
 {
 if(i==1){
@@ -136,8 +137,10 @@ for(j in 1:dim(mymat)[2])
 	m <- "svmLinear"
 	}else if(j==5){
 	  m <- "treebag"
-	}else{
+	}else if(j==6){
 	  m <- "blackboost"
+	}else{
+	  m <- "C5.0"
 	}
    train_control <- trainControl(method="cv", number=10 )
 	if(i==1){  # hep
@@ -178,20 +181,20 @@ for(j in 1:dim(mymat)[2])
   }
 }
 rownames(mymat) <- c('hepatits','diabetes','SPECT')
-colnames(mymat) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
+colnames(mymat) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost','C5.0')
 rownames(mymatp) <- c('hepatits','diabetes','SPECT')
-colnames(mymatp) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
+colnames(mymatp) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost','C5.0')
 rownames(mymatr) <- c('hepatits','diabetes','SPECT')
-colnames(mymatr) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
+colnames(mymatr) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost','C5.0')
 rownames(mymatf) <- c('hepatits','diabetes','SPECT')
-colnames(mymatf) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
+colnames(mymatf) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost','C5.0')
 acctable <- as.table(mymat)
 precision.table <- as.table(mymatp)
 recall.table <- as.table(mymatr)
 f.table <- as.table(mymatf)
 ```
 
-#### Accuracy table, precision table, recall table an f-measurment table
+#### Accuracy table, precision table, recall table and f-measurment table
 
 ```{r}
 acctable
@@ -200,11 +203,81 @@ recall.table
 f.table
 ```
 
+#### T-tests: examine if p-value < 0.05
+```{r}
+rfhep = c(acctable[1,1],precision.table[1,1],recall.table[1,1],f.table[1,1])
+rfdia = c(acctable[2,1],precision.table[2,1],recall.table[2,1],f.table[2,1])
+rfspect = c(acctable[3,1],precision.table[3,1],recall.table[3,1],f.table[3,1])
+
+nbhep = c(acctable[1,2],precision.table[1,2],recall.table[1,2],f.table[1,2])
+nbdia = c(acctable[2,2],precision.table[2,2],recall.table[2,2],f.table[2,2])
+nbspect = c(acctable[3,2],precision.table[3,2],recall.table[3,2],f.table[3,2])
+
+nnhep = c(acctable[1,3],precision.table[1,3],recall.table[1,3],f.table[1,3])
+nndia = c(acctable[2,3],precision.table[2,3],recall.table[2,3],f.table[2,3])
+nnspect = c(acctable[3,3],precision.table[3,3],recall.table[3,3],f.table[3,3])
+
+svmhep = c(acctable[1,4],precision.table[1,4],recall.table[1,4],f.table[1,4])
+svmdia = c(acctable[2,4],precision.table[2,4],recall.table[2,4],f.table[2,4])
+svmspect = c(acctable[3,4],precision.table[3,4],recall.table[3,4],f.table[3,4])
+
+C5hep = c(acctable[1,7],precision.table[1,7],recall.table[1,7],f.table[1,7])
+C5dia = c(acctable[2,7],precision.table[2,7],recall.table[2,7],f.table[2,7])
+C5spect = c(acctable[3,7],precision.table[3,7],recall.table[3,7],f.table[3,7])
+
+
+## T-test for hepatitis
+t.test(rfhep,nbhep,paired = TRUE)
+t.test(rfhep,nnhep,paired = TRUE)
+t.test(rfhep,svmhep,paired = TRUE)
+t.test(rfhep,C5hep,paired = TRUE)
+
+t.test(nbhep,nnhep,paired = TRUE)
+t.test(nbhep,svmhep,paired = TRUE)
+t.test(nbhep,C5hep,paired = TRUE)
+
+t.test(nnhep,svmhep,paired = TRUE)
+t.test(nnhep,C5hep,paired = TRUE)
+
+t.test(svmhep,C5hep,paired = TRUE)
+
+## T-test for diab.
+t.test(rfdia,nbdia,paired = TRUE)
+t.test(rfdia,nndia,paired = TRUE)
+t.test(rfdia,svmdia,paired = TRUE)
+t.test(rfdia,C5dia,paired = TRUE)
+
+t.test(nbdia,nndia,paired = TRUE)
+t.test(nbdia,svmdia,paired = TRUE)
+t.test(nbdia,C5dia,paired = TRUE)
+
+t.test(nndia,svmdia,paired = TRUE)
+t.test(nndia,C5dia,paired = TRUE)
+
+t.test(svmdia,C5dia,paired = TRUE)
+
+##T-test for spect
+t.test(rfspect,nbspect,paired = TRUE)
+t.test(rfspect,nnspect,paired = TRUE)
+t.test(rfspect,svmspect,paired = TRUE)
+t.test(rfspect,C5spect,paired = TRUE)
+
+t.test(nbspect,nnspect,paired = TRUE)
+t.test(nbspect,svmspect,paired = TRUE)
+t.test(nbspect,C5spect,paired = TRUE)
+
+t.test(nnspect,svmspect,paired = TRUE)
+t.test(nnspect,C5spect,paired = TRUE)
+
+t.test(svmspect,C5spect,paired = TRUE)
+
+```
+
 ### Conclusions and Remarks
 - for the Hepatits dataset class 1 is considered. The classification of "Die" . (the positive class in confusion matrix)
 - for the SPECT and Diabetes datasets class 1 are considered. The classification of patients that are classified positive for the disease. (the negative classes in confusion matrix)
 - the approach used is to have a part of the dataset for training and other for testing, in the case of SPECT there were two seperate datasets while for the other datasets splitting was performed. After that training is performed in addition to 10-fold cross validation, then testing was performed.
 - there were some missing values in the Hepatits dataset.
 - from the percpective of the performance of the model on the test dataset, the accuracy, precision, recall and F-measurment were considered.
-- the repetition of the experiment sometimes lead to slightly different results which could be accounted to the tuning and using cross validation with training which picks random subsets as folds. also the nature of some algorithms like random forest where a new model is learned.
+- the repetition of the experiment sometimes lead to slightly different results which could be accounted to the tuning (caret library is used) and using cross validation with training which picks random subsets as folds. also the nature of some algorithms like random forest where a new model is learned.
 - there is no overall winner, but in general the "SVM" maintains a good ranking in most of the performance measurments.
