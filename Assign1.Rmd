@@ -28,90 +28,46 @@ evaluate_Weka_classifier(sonar_j48, numFolds = 10, complexity = FALSE,
 ```
 
 ### Part (III):
-#### Here we want to compare the performance of the different classifiers. after each classifier we print the Sensitivity which is equal to the recall of the first class, Positive Predictive Value ois the Precision
-
-
-```{r}
-split=0.80
-trainIndex <- createDataPartition(df$R, p=split, list=FALSE)
-data_train <- df[ trainIndex,]
-data_test <- df[-trainIndex,]
-train_control <- trainControl(method="cv", number=10)
-model <- train(R~., data=data_train, trControl=train_control, method="rf")
-#print(model)
-
-p <- predict(model,newdata = data_test[,1:60])
-t <- table(p , data_test[,61])
-cm <- confusionMatrix(t)
-cm
-precision <- cm$byClass['Pos Pred Value'] 
-precision
-recall <- cm$byClass['Sensitivity']
-recall
-f_measure <- 2 * ((precision * recall) / (precision + recall))
-f_measure
-```
-
-
-
-```{r warning=FALSE, message=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
-split=0.80
-trainIndex <- createDataPartition(df$R, p=split, list=FALSE)
-data_train <- df[ trainIndex,]
-data_test <- df[-trainIndex,]
-train_control <- trainControl(method="cv", number=10)
-model <- train(R~., data=data_train, trControl=train_control, method="nb")
-p <- predict(model,newdata = data_test[,1:60])
-t <- table(p , data_test[,61])
-cm <- confusionMatrix(t)
-cm
-precision <- cm$byClass['Pos Pred Value'] 
-precision
-recall <- cm$byClass['Sensitivity']
-recall
-f_measure <- 2 * ((precision * recall) / (precision + recall))
-f_measure
-```
+#### Here we want to compare the performance of the different classifiers. after each classifier we print the Sensitivity which is equal to the recall of the first class, Positive Predictive Value is the Precision
 
 ```{r warning=FALSE, message=FALSE }
-knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
-split=0.80
+mymat = matrix(nrow=4, ncol=4)
+
+for(i in 1:dim(mymat)[1])  
+{
+	if(i==1){
+	m <- "rf"
+	}else if(i==2){
+	m <- "nb"
+	}else if(i==3){
+	m <- "nnet"
+	}else if(i==4){
+	m <- "svmLinear"
+	}
+	split=0.80
 trainIndex <- createDataPartition(df$R, p=split, list=FALSE)
 data_train <- df[ trainIndex,]
 data_test <- df[-trainIndex,]
 train_control <- trainControl(method="cv", number=10)
-model <- train(R~., data=data_train, trControl=train_control, method="nnet")
+model <- train(R~., data=data_train, trControl=train_control, method=m)
 p <- predict(model,newdata = data_test[,1:60])
 t <- table(p , data_test[,61])
 cm <- confusionMatrix(t)
-cm
+acc <- cm$overall['Accuracy']
 precision <- cm$byClass['Pos Pred Value'] 
-precision
 recall <- cm$byClass['Sensitivity']
-recall
 f_measure <- 2 * ((precision * recall) / (precision + recall))
-f_measure
+  for(j in 1:dim(mymat)[2]) # for each column
+  {
+    mymat[i,1] = acc
+    mymat[i,2] = precision
+    mymat[i,3] = recall
+    mymat[i,4] = f_measure
+  }
+}
+colnames(mymat) <- c('accuracy','precision','recall','f_measure')
+rownames(mymat) <- c('random.forest', 'naive.bayes','neural.network','svm')
+mytable <- as.table(mymat)
+mytable
 ```
-
-```{r warning=FALSE, message=FALSE }
-knitr::opts_chunk$set(echo = TRUE, warning=FALSE)
-split=0.80
-trainIndex <- createDataPartition(df$R, p=split, list=FALSE)
-data_train <- df[ trainIndex,]
-data_test <- df[-trainIndex,]
-train_control <- trainControl(method="cv", number=10)
-model <- train(R~., data=data_train, trControl=train_control, method="svmLinear")
-p <- predict(model,newdata = data_test[,1:60])
-t <- table(p , data_test[,61])
-cm <- confusionMatrix(t)
-cm
-precision <- cm$byClass['Pos Pred Value'] 
-precision
-recall <- cm$byClass['Sensitivity']
-recall
-f_measure <- 2 * ((precision * recall) / (precision + recall))
-f_measure
-```
-
 
