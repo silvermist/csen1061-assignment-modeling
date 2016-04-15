@@ -55,9 +55,14 @@ for(i in 1:dim(mymat)[1])
 	  m <- "blackboost"
 	}
 	split=0.80
-trainIndex <- createDataPartition(df$R, p=split, list=FALSE)
-data_train <- df[ trainIndex,]
-data_test <- df[-trainIndex,]
+bound <- floor(nrow(df)*0.8)         #define % of training and test set
+
+df <- df[sample(nrow(df)), ]           #sample rows 
+data_train <- df[1:bound, ]              #get training set
+data_test <- df[(bound+1):nrow(df), ] 
+#trainIndex <- createDataPartition(df$R, p=split, list=FALSE)
+#data_train <- df[ trainIndex,]
+#data_test <- df[-trainIndex,]
 train_control <- trainControl(method="cv", number=10 )
 model <- train(R~., data=data_train, trControl=train_control, method=m)
 p <- predict(model,newdata = data_test[,1:60])
@@ -101,21 +106,31 @@ colnames(SPECT.train) <- colnames(SPECT.test)
 #### Accuracy table
 ```{r warning=FALSE, message=FALSE , results="hide" }
 mymat = matrix(nrow=3, ncol=6)
-
+mymatp = matrix(nrow=3, ncol=6)
+mymatr = matrix(nrow=3, ncol=6)
+mymatf = matrix(nrow=3, ncol=6)
 for(i in 1:dim(mymat)[1])  # for each row
 {
 if(i==1){
 df <- hepatitis
 split=0.80
-trainIndex <- createDataPartition(df[,1], p=split, list=FALSE)
-data_train <- df[ trainIndex,]
-data_test <- df[-trainIndex,]
+bound <- floor(nrow(df)*0.8)         #define % of training and test set
+df <- df[sample(nrow(df)), ]           #sample rows 
+data_train <- df[1:bound, ]              #get training set
+data_test <- df[(bound+1):nrow(df), ] 
+#trainIndex <- createDataPartition(df[,1], p=split, list=FALSE)
+#data_train <- df[ trainIndex,]
+#data_test <- df[-trainIndex,]
 }else if(i==2){
 df <- diabetes
 split=0.80
-trainIndex <- createDataPartition(df[,9], p=split, list=FALSE)
-data_train <- df[ trainIndex,]
-data_test <- df[-trainIndex,]
+bound <- floor(nrow(df)*0.8)         #define % of training and test set
+df <- df[sample(nrow(df)), ]           #sample rows 
+data_train <- df[1:bound, ]              #get training set
+data_test <- df[(bound+1):nrow(df), ] 
+#trainIndex <- createDataPartition(df[,9], p=split, list=FALSE)
+#data_train <- df[ trainIndex,]
+#data_test <- df[-trainIndex,]
 }else{
 data_train <- SPECT.train
 data_test <- SPECT.test
@@ -161,14 +176,34 @@ for(j in 1:dim(mymat)[2])
 	}
 	cm <- confusionMatrix(t)
 	acc <- cm$overall['Accuracy']
+	precision <- cm$byClass['Pos Pred Value'] 
+  recall <- cm$byClass['Sensitivity']
+  f_measure <- 2 * ((precision * recall) / (precision + recall))
 	mymat[i,j] = acc
+	mymatp[i,j] = precision
+	mymatr[i,j] = recall
+	mymatf[i,j] = f_measure
   }
 }
 rownames(mymat) <- c('hepatits','diabetes','SPECT')
 colnames(mymat) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
+rownames(mymatp) <- c('hepatits','diabetes','SPECT')
+colnames(mymatp) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
+rownames(mymatr) <- c('hepatits','diabetes','SPECT')
+colnames(mymatr) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
+rownames(mymatf) <- c('hepatits','diabetes','SPECT')
+colnames(mymatf) <- c('random.forest', 'naive.bayes','neural.network','svm','treebag','blackboost')
 acctable <- as.table(mymat)
+precision.table <- as.table(mymatp)
+recall.table <- as.table(mymatr)
+f.table <- as.table(mymatf)
 ```
+
+#### printing the accuracy table ,precision table , recall table an f-score table
 
 ```{r}
 acctable
+precision.table
+recall.table
+f.table
 ```
