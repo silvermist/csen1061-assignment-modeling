@@ -55,14 +55,10 @@ for(i in 1:dim(mymat)[1])
 	  m <- "blackboost"
 	}
 	split=0.80
-bound <- floor(nrow(df)*0.8)         #define % of training and test set
-
-df <- df[sample(nrow(df)), ]           #sample rows 
-data_train <- df[1:bound, ]              #get training set
+bound <- floor(nrow(df)*0.8)         
+df <- df[sample(nrow(df)), ]         
+data_train <- df[1:bound, ]              
 data_test <- df[(bound+1):nrow(df), ] 
-#trainIndex <- createDataPartition(df$R, p=split, list=FALSE)
-#data_train <- df[ trainIndex,]
-#data_test <- df[-trainIndex,]
 train_control <- trainControl(method="cv", number=10 )
 model <- train(R~., data=data_train, trControl=train_control, method=m)
 p <- predict(model,newdata = data_test[,1:60])
@@ -89,48 +85,41 @@ mytable <- as.table(mymat)
 ```{r}
 mytable
 ```
+
 ### Part (IV) : Expermenting with different datasets.
 #### prepare the new datasets
 
 ```{r}
 hepatitis <- read.csv("hepatitis.data")
-#df2[df2 == '?'] <- NA
-#hepatitis <- clean(df2,0.5,0.3,name="hepatitis-clean")
 diabetes <- read.csv("pima-indians-diabetes.data")
 SPECT.test <- read.csv("SPECT.test")
 SPECT.train <- read.csv("SPECT.train")
 colnames(SPECT.train) <- colnames(SPECT.test) 
-#colnames(SPECT.test) <- c(1:23)
 ```
 
-#### Accuracy table
+#### Train the models on each dataset training part with each algorithm using cross validation, and test on testing part
+
 ```{r warning=FALSE, message=FALSE , results="hide" }
 mymat = matrix(nrow=3, ncol=6)
 mymatp = matrix(nrow=3, ncol=6)
 mymatr = matrix(nrow=3, ncol=6)
 mymatf = matrix(nrow=3, ncol=6)
-for(i in 1:dim(mymat)[1])  # for each row
+for(i in 1:dim(mymat)[1])  
 {
 if(i==1){
 df <- hepatitis
 split=0.80
-bound <- floor(nrow(df)*0.8)         #define % of training and test set
-df <- df[sample(nrow(df)), ]           #sample rows 
-data_train <- df[1:bound, ]              #get training set
+bound <- floor(nrow(df)*0.8)         
+df <- df[sample(nrow(df)), ]          
+data_train <- df[1:bound, ]             
 data_test <- df[(bound+1):nrow(df), ] 
-#trainIndex <- createDataPartition(df[,1], p=split, list=FALSE)
-#data_train <- df[ trainIndex,]
-#data_test <- df[-trainIndex,]
 }else if(i==2){
 df <- diabetes
 split=0.80
-bound <- floor(nrow(df)*0.8)         #define % of training and test set
-df <- df[sample(nrow(df)), ]           #sample rows 
-data_train <- df[1:bound, ]              #get training set
+bound <- floor(nrow(df)*0.8)        
+df <- df[sample(nrow(df)), ]           
+data_train <- df[1:bound, ]              
 data_test <- df[(bound+1):nrow(df), ] 
-#trainIndex <- createDataPartition(df[,9], p=split, list=FALSE)
-#data_train <- df[ trainIndex,]
-#data_test <- df[-trainIndex,]
 }else{
 data_train <- SPECT.train
 data_test <- SPECT.test
@@ -150,34 +139,37 @@ for(j in 1:dim(mymat)[2])
 	}else{
 	  m <- "blackboost"
 	}
-   
+   train_control <- trainControl(method="cv", number=10 )
 	if(i==1){  # hep
-	 train_control <- trainControl(method="cv", number=10)
+	 
  X2 <- data_train$X2
    data_train$X2 <- factor(X2)
 	 	model <- train(X2~., data=data_train, trControl=train_control, method=m)
 	p <- predict(model,newdata = data_test[,-1])
 	t <- table(p , data_test[,1])
 	}else if(i==3){ #Spect
-	   train_control <- trainControl(method="cv", number=10)
 	   X1 <- data_train$X1
    data_train$X1 <- factor(X1)
 	model <- train(X1~., data=data_train, trControl=train_control, method=m )
 	p <- predict(model,newdata = data_test[,-1])
 	t <- table(p , data_test[,1])
 	}
-	  else{ #diabetes
-	  train_control <- trainControl(method="cv", number=10)
-	X1 <- data_train$X1
-   data_train$X1 <- factor(X1)
-	  model <- train(X1~., data=data_train, trControl=train_control, method=m)
-	p <- predict(model,newdata = data_test[,-9])
-	t <- table(p , data_test[,9])
+	 else{ #diabetes
+  	X1 <- data_train$X1
+    data_train$X1 <- factor(X1)
+  	model <- train(X1~., data=data_train, trControl=train_control, method=m)
+  	p <- predict(model,newdata = data_test[,-9])
+  	t <- table(p , data_test[,9])
 	}
 	cm <- confusionMatrix(t)
 	acc <- cm$overall['Accuracy']
+	if(i==1){ #Hepatities , class 1 corresponds to die and its the positive class
 	precision <- cm$byClass['Pos Pred Value'] 
   recall <- cm$byClass['Sensitivity']
+}else{ # for SPECT and Diabetes we want to consider the class 1 , where the patient tested positive for the disease
+  precision <- cm$byClass['Neg Pred Value'] 
+  recall <- cm$byClass['Specificity']
+}
   f_measure <- 2 * ((precision * recall) / (precision + recall))
 	mymat[i,j] = acc
 	mymatp[i,j] = precision
@@ -199,7 +191,7 @@ recall.table <- as.table(mymatr)
 f.table <- as.table(mymatf)
 ```
 
-#### printing the accuracy table ,precision table , recall table an f-score table
+#### Accuracy table, precision table, recall table an f-measurment table
 
 ```{r}
 acctable
@@ -207,3 +199,12 @@ precision.table
 recall.table
 f.table
 ```
+
+### Conclusions and Remarks
+- for the Hepatits dataset class 1 is considered. The classification of "Die" . (the positive class in confusion matrix)
+- for the SPECT and Diabetes datasets class 1 are considered. The classification of patients that are classified positive for the disease. (the negative classes in confusion matrix)
+- the approach used is to have a part of the dataset for training and other for testing, in the case of SPECT there were two seperate datasets while for the other datasets splitting was performed. After that training is performed in addition to 10-fold cross validation, then testing was performed.
+- there were some missing values in the Hepatits dataset.
+- from the percpective of the performance of the model on the test dataset, the accuracy, precision, recall and F-measurment were considered.
+- the repetition of the experiment sometimes lead to slightly different results which could be accounted to the tuning and using cross validation with training which picks random subsets as folds. also the nature of some algorithms like random forest where a new model is learned.
+- there is no overall winner, but in general the "SVM" maintains a good ranking in most of the performance measurments.
